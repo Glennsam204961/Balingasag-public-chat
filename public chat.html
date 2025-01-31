@@ -241,21 +241,105 @@
       font-style: italic;
       color: #ff4d4d;
     }
+    /* Hamburger Button */
+#hamburger-btn {
+  display: none; /* Hide by default on larger screens */
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  margin-left: auto; /* Push to the right */
+}
+
+/* Buttons Container */
+#header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Hide buttons on smaller screens */
+@media (max-width: 768px) {
+  #hamburger-btn {
+    display: block; /* Show hamburger button */
+  }
+
+  #header-buttons {
+    display: none; /* Hide buttons by default */
+    position: absolute;
+    top: 60px; /* Adjust based on header height */
+    right: 20px;
+    background-color: #1c1c1c;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #header-buttons.show {
+    display: flex; /* Show buttons when toggled */
+  }
+}
+/* Profile Container */
+#profile-container {
+  position: relative;
+  width: 60px; /* Adjust based on your design */
+  height: 60px; /* Adjust based on your design */
+  margin-right: 15px;
+}
+
+/* Cover Photo */
+#cover-photo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background-image: url('/img/Picsart_24-08-25_10-07-45-476.jpg'); /* Add your cover photo URL */
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px; /* Adjust for rounded corners */
+  z-index: 1;
+}
+
+/* Profile Picture */
+#profile-picture {
+  position: absolute;
+  bottom: -10px; /* Adjust to position the profile picture over the cover photo */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #1c1c1c; /* Add a border to make it stand out */
+  z-index: 2;
+}
   </style>
 </head>
 <body>
   <!-- Chat Container -->
   <div id="chat-container" class="hidden">
-    <div id="chat-header">
-      <img id="profile-picture" src="/img/Picsart_24-12-04_17-20-39-417.png" alt="Profile Picture">
-      <h2>GLENN</h2>
-      <a href="https://www.facebook.com/profile.php?id=100084911114022" id="profile-link">Follow Me</a>
-      <button id="logout">Logout</button>
-      <!-- Typing Indicator -->
-      <div id="typing-indicator">
-        <span id="typing-text"></span> is typing...
-      </div>
-    </div>
+<div id="chat-header">
+  <!-- Cover Photo and Profile Picture Container -->
+  <div id="profile-container">
+    <div id="cover-photo"></div>
+    <img id="profile-picture" src="/img/Picsart_24-12-04_17-20-39-417.png" alt="Profile Picture">
+  </div>
+  <h2><marquee behavior="scroll" direction="left">Balingasag Public chat</marquee></h2>
+  <!-- Hamburger Button -->
+  <button id="hamburger-btn">☰</button>
+  <!-- Buttons Container -->
+  <div id="header-buttons">
+    <a href="https://www.facebook.com/profile.php?id=100084911114022" id="profile-link">Follow Me</a>
+    <button id="logout">Logout</button>
+  </div>
+  <!-- Typing Indicator -->
+  <div id="typing-indicator">
+    <span id="typing-text"></span> is typing...
+  </div>
+</div>
     <div id="chat-messages"></div>
     <form id="chat-form">
       <input type="text" id="message-input" placeholder="Type a message..." required />
@@ -477,7 +561,13 @@
           }
         });
       });
+// Hamburger Button Logic
+const hamburgerBtn = document.getElementById("hamburger-btn");
+const headerButtons = document.getElementById("header-buttons");
 
+hamburgerBtn.addEventListener("click", () => {
+  headerButtons.classList.toggle("show");
+});
       chatMessages.scrollTop = chatMessages.scrollHeight;
     });
   </script>
