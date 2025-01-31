@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>public chat</title>
+  <title>Public Chat</title>
   <style>
     /* Global Styles */
     body {
@@ -32,6 +32,7 @@
       padding: 10px 20px;
       background-color: #1c1c1c;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      position: relative;
     }
 
     /* Profile picture */
@@ -75,6 +76,21 @@
       color: #dcdcdc;
     }
 
+    /* Typing Indicator */
+    #typing-indicator {
+      position: absolute;
+      bottom: -25px;
+      left: 15px;
+      font-size: 14px;
+      color: #dcdcdc;
+      background-color: #1c1c1c;
+      padding: 5px 10px;
+      border-radius: 12px;
+      display: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Chat Messages */
     #chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -84,7 +100,6 @@
       flex-direction: column;
     }
 
-    /* Messages container styles */
     .message-container {
       margin-bottom: 15px;
       display: flex;
@@ -92,17 +107,14 @@
       max-width: 70%;
     }
 
-    /* Messages aligned to the left for other user */
     .message-container.other-user {
       align-self: flex-start;
     }
 
-    /* Messages aligned to the right for current user */
     .message-container.current-user {
       align-self: flex-end;
     }
 
-    /* Common styles for message */
     .message {
       padding: 15px;
       background-color: #333;
@@ -224,11 +236,11 @@
       color: #ff4d4d;
       margin-top: 10px;
     }
-    /* Style for unsent message notification */
-.message.unsent {
-  font-style: italic;
-  color: #ff4d4d;
-}
+
+    .message.unsent {
+      font-style: italic;
+      color: #ff4d4d;
+    }
   </style>
 </head>
 <body>
@@ -237,9 +249,12 @@
     <div id="chat-header">
       <img id="profile-picture" src="/img/Picsart_24-12-04_17-20-39-417.png" alt="Profile Picture">
       <h2>GLENN</h2>
-   
       <a href="https://www.facebook.com/profile.php?id=100084911114022" id="profile-link">Follow Me</a>
-         <button id="logout">Logout</button>
+      <button id="logout">Logout</button>
+      <!-- Typing Indicator -->
+      <div id="typing-indicator">
+        <span id="typing-text"></span> is typing...
+      </div>
     </div>
     <div id="chat-messages"></div>
     <form id="chat-form">
@@ -263,7 +278,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
-    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
+    import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
 
     // Firebase config
     const firebaseConfig = {
@@ -344,105 +359,127 @@
       messageInput.value = "";
     });
 
-    onValue(ref(database, "messages"), (snapshot) => {
-  chatMessages.innerHTML = "";
-  snapshot.forEach((childSnapshot) => {
-    const { text, sender, timestamp } = childSnapshot.val();
-    const messageKey = childSnapshot.key; // Unique message key
-    const messageDiv = document.createElement("div");
-    messageDiv.classList.add("message-container");
+    // Typing Indicator Logic
+    let typingTimeout;
+    const typingRef = ref(database, "typing");
 
-    // Add classes for alignment based on sender
-    messageDiv.classList.add(
-      sender === auth.currentUser.email.split("@")[0] ?
-      "current-user" :
-      "other-user"
-    );
-
-    // Create message with reactions and unsend option
-    messageDiv.innerHTML = `
-      <div class="username">${sender}</div>
-      <div class="message" data-key="${messageKey}">${text}</div>
-      <div class="timestamp">${timestamp}</div>
-      <div class="reaction-container">
-        <button class="reaction-btn">+</button>
-        <div class="emoji-picker" style="display: none;">
-          <span class="emoji">😊</span>
-          <span class="emoji">😆</span>
-          <span class="emoji">😢</span>
-          <span class="emoji">❤️</span>
-          <span class="emoji">👍</span>
-        </div>
-        <span class="reaction-display" id="reaction-${messageKey}"></span>
-      </div>
-    `;
-
-    chatMessages.appendChild(messageDiv);
-
-    const reactionBtn = messageDiv.querySelector(".reaction-btn");
-    const emojiPicker = messageDiv.querySelector(".emoji-picker");
-
-    // Toggle emoji picker visibility
-    reactionBtn.addEventListener("click", () => {
-      emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
-    });
-
-    // Handle emoji selection
-    const emojis = emojiPicker.querySelectorAll(".emoji");
-    emojis.forEach((emoji) => {
-      emoji.addEventListener("click", () => {
-        const selectedEmoji = emoji.textContent;
-        const reactionRef = ref(database, `reactions/${messageKey}`);
-        push(reactionRef, selectedEmoji); // Store the selected emoji in Firebase
-        emojiPicker.style.display = "none"; // Hide the emoji picker after selection
+    messageInput.addEventListener("input", () => {
+      set(typingRef, {
+        user: auth.currentUser.email.split("@")[0],
+        isTyping: true,
       });
+
+      if (typingTimeout) clearTimeout(typingTimeout);
+
+      typingTimeout = setTimeout(() => {
+        set(typingRef, {
+          user: auth.currentUser.email.split("@")[0],
+          isTyping: false,
+        });
+      }, 2000);
     });
 
-    // Display reactions
-    const reactionDisplay = messageDiv.querySelector(".reaction-display");
-    onValue(ref(database, `reactions/${messageKey}`), (reactionSnapshot) => {
-      let reactions = [];
-      reactionSnapshot.forEach((childReaction) => {
-        reactions.push(childReaction.val());
-      });
-      reactionDisplay.textContent = reactions.join(" ");
-    });
+    onValue(typingRef, (snapshot) => {
+      const typingData = snapshot.val();
+      const typingIndicator = document.getElementById("typing-indicator");
+      const typingText = document.getElementById("typing-text");
 
-    // Handle double-tap for unsend
-    const messageElement = messageDiv.querySelector(".message");
-    let tapTimeout = null;
-    messageElement.addEventListener("click", () => {
-      if (tapTimeout) {
-        // Double-tap detected
-        clearTimeout(tapTimeout);
-        tapTimeout = null;
-
-        if (sender === auth.currentUser.email.split("@")[0]) {
-          // Prompt to unsend
-          const confirmUnsend = confirm("Do you want to unsend this message?");
-          if (confirmUnsend) {
-            const messageRef = ref(database, `messages/${messageKey}`);
-            set(messageRef, {
-              text: `[${sender} unsent a message]`,
-              sender,
-              timestamp,
-            });
-            // Optionally add 'unsent' class for styling
-            messageDiv.querySelector(".message").classList.add("unsent");
-          }
-        }
+      if (typingData && typingData.isTyping) {
+        typingText.textContent = typingData.user;
+        typingIndicator.style.display = "block";
       } else {
-        // Set timeout for the first tap
-        tapTimeout = setTimeout(() => {
-          tapTimeout = null;
-        }, 300);
+        typingIndicator.style.display = "none";
       }
     });
-  });
 
-  // Auto-scroll to bottom
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-});
+    onValue(ref(database, "messages"), (snapshot) => {
+      chatMessages.innerHTML = "";
+      snapshot.forEach((childSnapshot) => {
+        const { text, sender, timestamp } = childSnapshot.val();
+        const messageKey = childSnapshot.key;
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add("message-container");
+
+        messageDiv.classList.add(
+          sender === auth.currentUser.email.split("@")[0] ?
+          "current-user" :
+          "other-user"
+        );
+
+        messageDiv.innerHTML = `
+          <div class="username">${sender}</div>
+          <div class="message" data-key="${messageKey}">${text}</div>
+          <div class="timestamp">${timestamp}</div>
+          <div class="reaction-container">
+            <button class="reaction-btn">+</button>
+            <div class="emoji-picker" style="display: none;">
+              <span class="emoji">😊</span>
+              <span class="emoji">😆</span>
+              <span class="emoji">😢</span>
+              <span class="emoji">❤️</span>
+              <span class="emoji">👍</span>
+            </div>
+            <span class="reaction-display" id="reaction-${messageKey}"></span>
+          </div>
+        `;
+
+        chatMessages.appendChild(messageDiv);
+
+        const reactionBtn = messageDiv.querySelector(".reaction-btn");
+        const emojiPicker = messageDiv.querySelector(".emoji-picker");
+
+        reactionBtn.addEventListener("click", () => {
+          emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+        });
+
+        const emojis = emojiPicker.querySelectorAll(".emoji");
+        emojis.forEach((emoji) => {
+          emoji.addEventListener("click", () => {
+            const selectedEmoji = emoji.textContent;
+            const reactionRef = ref(database, `reactions/${messageKey}`);
+            push(reactionRef, selectedEmoji);
+            emojiPicker.style.display = "none";
+          });
+        });
+
+        const reactionDisplay = messageDiv.querySelector(".reaction-display");
+        onValue(ref(database, `reactions/${messageKey}`), (reactionSnapshot) => {
+          let reactions = [];
+          reactionSnapshot.forEach((childReaction) => {
+            reactions.push(childReaction.val());
+          });
+          reactionDisplay.textContent = reactions.join(" ");
+        });
+
+        const messageElement = messageDiv.querySelector(".message");
+        let tapTimeout = null;
+        messageElement.addEventListener("click", () => {
+          if (tapTimeout) {
+            clearTimeout(tapTimeout);
+            tapTimeout = null;
+
+            if (sender === auth.currentUser.email.split("@")[0]) {
+              const confirmUnsend = confirm("Do you want to unsend this message?");
+              if (confirmUnsend) {
+                const messageRef = ref(database, `messages/${messageKey}`);
+                set(messageRef, {
+                  text: `[${sender} unsent a message]`,
+                  sender,
+                  timestamp,
+                });
+                messageDiv.querySelector(".message").classList.add("unsent");
+              }
+            }
+          } else {
+            tapTimeout = setTimeout(() => {
+              tapTimeout = null;
+            }, 300);
+          }
+        });
+      });
+
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
   </script>
 </body>
 </html>
