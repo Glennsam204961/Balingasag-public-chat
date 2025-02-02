@@ -17,10 +17,68 @@
       overflow: hidden;
     }
 
+    /* Username Prompt Modal */
+    #username-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #username-form {
+      background-color: #1c1c1c;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+      text-align: center;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    #username-form h2 {
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: #fff;
+    }
+
+    #username-form input {
+      width: 60%;
+      padding: 10px;
+      margin-bottom: 15px;
+      background-color: #333;
+      border: 1px solid #fff;
+      border-radius: 8px;
+      color: #fff;
+      outline: none;
+      font-size: 16px;
+    }
+
+    #username-form button {
+      width: 30%;
+      padding: 10px;
+      background-color: #fff;
+      color: #121212;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+
+    #username-form button:hover {
+      background-color: #dcdcdc;
+    }
+
     /* Chat Container Styles */
     #chat-container {
       width: 100%;
-      height: 85%;
+      height: 100%;
       display: flex;
       flex-direction: column;
     }
@@ -40,7 +98,7 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      margin-right: 15px;
+      margin-right: 20px;
     }
 
     #chat-header h1 {
@@ -79,11 +137,11 @@
     /* Typing Indicator */
     #typing-indicator {
       position: absolute;
-      bottom: -25px;
+      bottom: -5px;
       left: 15px;
       font-size: 14px;
       color: #dcdcdc;
-      background-color: #1c1c1c;
+      background-color: #00000000;
       padding: 5px 10px;
       border-radius: 12px;
       display: none;
@@ -105,6 +163,7 @@
       display: flex;
       flex-direction: column;
       max-width: 70%;
+      position: relative;
     }
 
     .message-container.other-user {
@@ -169,177 +228,164 @@
       background-color: #dcdcdc;
     }
 
-    /* Authentication Modal Styles */
-    #auth-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(18, 18, 18, 0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
-
-    #auth-form {
-      background-color: #1c1c1c;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
-      text-align: center;
-      color: #fff;
-      width: 100%;
-      max-width: 300px;
-    }
-
-    #auth-form h2 {
-      margin-bottom: 20px;
-      font-size: 24px;
-      color: #fff;
-    }
-
-    #auth-form input {
-      width: 65%;
-      padding: 12px;
-      margin: 10px 0;
-      background-color: #333;
-      border: 1px solid #fff;
-      border-radius: 20px;
-      color: #fff;
-      outline: none;
-    }
-
-    #auth-form button {
-      width: 30%;
-      padding: 12px;
-      background-color: #fff;
-      color: #121212;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    #auth-form button:hover {
-      background-color: #dcdcdc;
-    }
-
-    #toggle-auth span {
-      color: #fff;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
-    #error-message {
-      color: #ff4d4d;
-      margin-top: 10px;
-    }
-
     .message.unsent {
       font-style: italic;
       color: #ff4d4d;
     }
-    /* Hamburger Button */
-#hamburger-btn {
-  display: none; /* Hide by default on larger screens */
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 24px;
-  cursor: pointer;
-  margin-left: auto; /* Push to the right */
+
+    /* Reaction Styles */
+    .reaction-container {
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .reaction-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .emoji-picker {
+      display: none;
+      position: absolute;
+      background: #1c1c1c;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      top: 20px;
+      left: 0;
+      z-index: 10;
+    }
+
+    .emoji {
+      cursor: pointer;
+      margin: 0 2px;
+      font-size: 16px;
+    }
+
+    .reaction-display {
+      margin-left: 5px;
+      font-size: 12px;
+    }
+    /* Buttons Container */
+    #header-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+      #hamburger-btn {
+        display: block;
+      }
+
+      #header-buttons {
+        display: none;
+        position: absolute;
+        top: 60px;
+        right: 20px;
+        background-color: #1C1C1C;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      #header-buttons.show {
+        display: flex;
+      }
+    }
+
+    /* Profile Container */
+    #profile-container {
+      position: relative;
+      width: 60px;
+      height: 50px;
+      margin-right: 15px;
+    }
+
+    /* Cover Photo */
+    #cover-photo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 100%;
+      background-image: url('/img/Picsart_24-08-25_10-07-45-476.jpg');
+      background-size: cover;
+      background-position: center;
+      border-radius: 12px;
+      z-index: 1;
+    }
+
+    /* Profile Picture */
+    #profile-picture {
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid #1c1c1c;
+      z-index: 2;
+    }
+    /* Add these styles to your existing CSS */
+#online-indicator {
+  font-size: 14px;
+  color: greenyellow;
+  margin-left: 20px;
 }
 
-/* Buttons Container */
-#header-buttons {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Hide buttons on smaller screens */
-@media (max-width: 768px) {
-  #hamburger-btn {
-    display: block; /* Show hamburger button */
-  }
-
-  #header-buttons {
-    display: none; /* Hide buttons by default */
-    position: absolute;
-    top: 60px; /* Adjust based on header height */
-    right: 20px;
-    background-color: #1c1c1c;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  #header-buttons.show {
-    display: flex; /* Show buttons when toggled */
-  }
-}
-/* Profile Container */
-#profile-container {
-  position: relative;
-  width: 60px; /* Adjust based on your design */
-  height: 60px; /* Adjust based on your design */
-  margin-right: 15px;
-}
-
-/* Cover Photo */
-#cover-photo {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 200%;
-  height: 100%;
-  background-image: url('/img/Picsart_24-08-25_10-07-45-476.jpg'); /* Add your cover photo URL */
-  background-size: cover;
-  background-position: center;
-  border-radius: 12px; /* Adjust for rounded corners */
-  z-index: 1;
-}
-
-/* Profile Picture */
-#profile-picture {
-  position: absolute;
-  bottom: -10px; /* Adjust to position the profile picture over the cover photo */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid #1c1c1c; /* Add a border to make it stand out */
-  z-index: 2;
+#online-count {
+  font-weight: bold;
+  color: green; /* Green color for online users */
 }
   </style>
 </head>
 <body>
+  <!-- Username Prompt Modal -->
+  <div id="username-modal">
+    <div id="username-form">
+      <h2>Enter Your Username</h2>
+      <input type="text" id="username-input" placeholder="Username" required />
+      <button id="username-submit">Join</button>
+    </div>
+  </div>
+
   <!-- Chat Container -->
   <div id="chat-container" class="hidden">
-<div id="chat-header">
-  <!-- Cover Photo and Profile Picture Container -->
-  <div id="profile-container">
-    <div id="cover-photo"></div>
-    <img id="profile-picture" src="/img/Picsart_24-12-04_17-20-39-417.png" alt="Profile Picture">
-  </div>
-  <h2><marquee behavior="scroll" direction="left">Balingasag Public chat</marquee></h2>
-  <!-- Hamburger Button -->
-  <button id="hamburger-btn">☰</button>
-  <!-- Buttons Container -->
-  <div id="header-buttons">
-    <a href="https://www.facebook.com/profile.php?id=100084911114022" id="profile-link">Follow Me</a>
-    <button id="logout">Logout</button>
-  </div>
-  <!-- Typing Indicator -->
-  <div id="typing-indicator">
-    <span id="typing-text"></span> is typing...
-  </div>
-</div>
+    <div id="chat-header">
+      <!-- Cover Photo and Profile Picture Container -->
+      <div id="profile-container">
+        <div id="cover-photo"></div>
+        <img id="profile-picture" src="/img/Picsart_24-12-04_17-20-39-417.png" alt="Profile Picture">
+      </div>
+      
+      <h2><marquee behavior="scroll" direction="left">Nove://.11/29/22</marquee></h2>
+      
+      <!-- Hamburger Button -->
+      <button id="hamburger-btn"> =</button>
+      
+      <!-- Buttons Container -->
+      <div id="header-buttons">
+        <a href="https://www.facebook.com/profile.php?id=100084911114022" id="profile-link">Follow Me</a>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div id="typing-indicator">
+        <span id="typing-text"></span> is typing...
+      </div>
+           
+    </div>
+     <div id="online-indicator">
+   <span id="online-count">0</span> online
+ </div>
     <div id="chat-messages"></div>
     <form id="chat-form">
       <input type="text" id="message-input" placeholder="Type a message..." required />
@@ -347,97 +393,106 @@
     </form>
   </div>
 
-  <!-- Authentication Modal -->
-  <div id="auth-modal">
-    <div id="auth-form">
-      <h2 id="auth-title">Login</h2>
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button id="auth-action">Login</button>
-      <p id="toggle-auth">Don't have an account? <span>Sign Up</span></p>
-      <p id="error-message"></p>
-    </div>
-  </div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-auth.js";
     import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
 
     // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBMoly1Wc6bkwEIKBGiqFmU_BuoUQNeSgo",
-      authDomain: "Offline chat app",
-      projectId: "183190793649",
+      authDomain:"", // Replace with your Firebase auth domain or leave as null
+      projectId: "offline-chat-app-a50ef", // Replace with your Firebase project ID
       databaseURL: "https://offline-chat-app-a50ef-default-rtdb.firebaseio.com/",
-      messagingSenderId: "183190793649",
-      appId: "1:183190793649:android:e81f98e0b2e8f562272190",
+      messagingSenderId: "183190793649", // Replace with your Firebase sender ID
+      appId: "1:183190793649:android:e81f98e0b2e8f562272190", // Replace with your Firebase app ID
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth();
     const database = getDatabase(app);
 
-    const authModal = document.getElementById("auth-modal");
-    const authTitle = document.getElementById("auth-title");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const authAction = document.getElementById("auth-action");
-    const toggleAuth = document.getElementById("toggle-auth");
-    const errorMessage = document.getElementById("error-message");
     const chatContainer = document.getElementById("chat-container");
     const chatMessages = document.getElementById("chat-messages");
     const chatForm = document.getElementById("chat-form");
     const messageInput = document.getElementById("message-input");
-    const logoutButton = document.getElementById("logout");
+    const typingRef = ref(database, "typing");
 
-    let isSignUp = false;
+    const usernameModal = document.getElementById("username-modal");
+    const usernameInput = document.getElementById("username-input");
+    const usernameSubmit = document.getElementById("username-submit");
 
-    toggleAuth.addEventListener("click", () => {
-      isSignUp = !isSignUp;
-      authTitle.innerText = isSignUp ? "Sign Up" : "Login";
-      authAction.innerText = isSignUp ? "Sign Up" : "Login";
-      toggleAuth.innerHTML = isSignUp
-        ? "Already have an account? <span>Login</span>"
-        : "Don't have an account? <span>Sign Up</span>";
-    });
+    let username = localStorage.getItem("username");
 
-    authAction.addEventListener("click", async () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
+    // Show username modal if no username is set
+    if (!username) {
+      usernameModal.style.display = "flex";
+    } else {
+      usernameModal.style.display = "none";
+      chatContainer.classList.remove("hidden");
+    }
+// Add this to your existing JavaScript code
 
-      try {
-        if (isSignUp) {
-          await createUserWithEmailAndPassword(auth, email, password);
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-        }
-      } catch (error) {
-        errorMessage.textContent = error.message;
-      }
-    });
+// Reference to the online users in Firebase
+const onlineUsersRef = ref(database, "onlineUsers");
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        authModal.style.display = "none";
+// Function to add a user to the online list
+function addUserToOnlineList(username) {
+  set(ref(database, `onlineUsers/${username}`), {
+    online: true,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+// Function to remove a user from the online list
+function removeUserFromOnlineList(username) {
+  set(ref(database, `onlineUsers/${username}`), {
+    online: false,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+// Add the current user to the online list when they join
+addUserToOnlineList(username);
+
+// Remove the user from the online list when they leave
+window.addEventListener("beforeunload", () => {
+  removeUserFromOnlineList(username);
+});
+
+// Listen for changes in the online users list
+onValue(onlineUsersRef, (snapshot) => {
+  let onlineCount = 0;
+  snapshot.forEach((childSnapshot) => {
+    const { online } = childSnapshot.val();
+    if (online) {
+      onlineCount++;
+    }
+  });
+
+  // Update the online indicator
+  const onlineCountElement = document.getElementById("online-count");
+  onlineCountElement.textContent = onlineCount;
+});
+    // Handle username submission
+    usernameSubmit.addEventListener("click", () => {
+      const inputUsername = usernameInput.value.trim();
+      if (inputUsername) {
+        username = inputUsername;
+        localStorage.setItem("username", username);
+        usernameModal.style.display = "none";
         chatContainer.classList.remove("hidden");
       } else {
-        authModal.style.display = "flex";
-        chatContainer.classList.add("hidden");
+        alert("Please enter a valid username.");
       }
     });
 
-    logoutButton.addEventListener("click", async () => {
-      await signOut(auth);
-    });
-
+    // Chat Form Submission
     chatForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const message = messageInput.value;
       const currentTime = new Date().toLocaleString();
       await push(ref(database, "messages"), {
         text: message,
-        sender: auth.currentUser.email.split('@')[0],
+        sender: username,
         timestamp: currentTime,
       });
       messageInput.value = "";
@@ -445,11 +500,9 @@
 
     // Typing Indicator Logic
     let typingTimeout;
-    const typingRef = ref(database, "typing");
-
     messageInput.addEventListener("input", () => {
       set(typingRef, {
-        user: auth.currentUser.email.split("@")[0],
+        user: username,
         isTyping: true,
       });
 
@@ -457,7 +510,7 @@
 
       typingTimeout = setTimeout(() => {
         set(typingRef, {
-          user: auth.currentUser.email.split("@")[0],
+          user: username,
           isTyping: false,
         });
       }, 2000);
@@ -476,6 +529,7 @@
       }
     });
 
+    // Load Messages
     onValue(ref(database, "messages"), (snapshot) => {
       chatMessages.innerHTML = "";
       snapshot.forEach((childSnapshot) => {
@@ -485,9 +539,7 @@
         messageDiv.classList.add("message-container");
 
         messageDiv.classList.add(
-          sender === auth.currentUser.email.split("@")[0] ?
-          "current-user" :
-          "other-user"
+          sender === username ? "current-user" : "other-user"
         );
 
         messageDiv.innerHTML = `
@@ -496,12 +548,13 @@
           <div class="timestamp">${timestamp}</div>
           <div class="reaction-container">
             <button class="reaction-btn">+</button>
-            <div class="emoji-picker" style="display: none;">
-              <span class="emoji">😊</span>
-              <span class="emoji">😆</span>
+            <div class="emoji-picker">
+              <span class="emoji">🥰</span>
+              <span class="emoji">🥺</span>
               <span class="emoji">😢</span>
               <span class="emoji">❤️</span>
-              <span class="emoji">👍</span>
+              <span class="emoji">😽</span>
+              <span class="emoji">🙄</span>
             </div>
             <span class="reaction-display" id="reaction-${messageKey}"></span>
           </div>
@@ -509,10 +562,13 @@
 
         chatMessages.appendChild(messageDiv);
 
+        // Reaction Logic
         const reactionBtn = messageDiv.querySelector(".reaction-btn");
         const emojiPicker = messageDiv.querySelector(".emoji-picker");
+        const reactionDisplay = messageDiv.querySelector(".reaction-display");
 
-        reactionBtn.addEventListener("click", () => {
+        reactionBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
           emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
         });
 
@@ -526,7 +582,7 @@
           });
         });
 
-        const reactionDisplay = messageDiv.querySelector(".reaction-display");
+        // Display Reactions
         onValue(ref(database, `reactions/${messageKey}`), (reactionSnapshot) => {
           let reactions = [];
           reactionSnapshot.forEach((childReaction) => {
@@ -535,23 +591,26 @@
           reactionDisplay.textContent = reactions.join(" ");
         });
 
+        // Unsend Logic
         const messageElement = messageDiv.querySelector(".message");
         let tapTimeout = null;
+
         messageElement.addEventListener("click", () => {
           if (tapTimeout) {
             clearTimeout(tapTimeout);
             tapTimeout = null;
 
-            if (sender === auth.currentUser.email.split("@")[0]) {
+            // Only allow the sender to unsend their own messages
+            if (sender === username) {
               const confirmUnsend = confirm("Do you want to unsend this message?");
               if (confirmUnsend) {
                 const messageRef = ref(database, `messages/${messageKey}`);
                 set(messageRef, {
-                  text: `[${sender} unsent a message]`,
-                  sender,
-                  timestamp,
+                  text: `[${username} unsent a message]`,
+                  sender: username,
+                  timestamp: timestamp,
                 });
-                messageDiv.querySelector(".message").classList.add("unsent");
+                messageElement.classList.add("unsent");
               }
             }
           } else {
@@ -561,14 +620,15 @@
           }
         });
       });
-// Hamburger Button Logic
-const hamburgerBtn = document.getElementById("hamburger-btn");
-const headerButtons = document.getElementById("header-buttons");
-
-hamburgerBtn.addEventListener("click", () => {
-  headerButtons.classList.toggle("show");
-});
       chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+
+    // Hamburger Button Logic
+    const hamburgerBtn = document.getElementById("hamburger-btn");
+    const headerButtons = document.getElementById("header-buttons");
+
+    hamburgerBtn.addEventListener("click", () => {
+      headerButtons.classList.toggle("show");
     });
   </script>
 </body>

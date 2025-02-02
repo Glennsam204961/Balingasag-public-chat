@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Roboto", sans-serif;
+      background-color: #121212;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #admin-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: #1c1c1c;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    #admin-header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #fff;
+    }
+
+    #admin-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background-color: #121212;
+    }
+
+    .message-container {
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+      max-width: 70%;
+      position: relative;
+    }
+
+    .message-container.other-user {
+      align-self: flex-start;
+    }
+
+    .message-container.current-user {
+      align-self: flex-end;
+    }
+
+    .message {
+      padding: 15px;
+      background-color: #333;
+      border: 1px solid #fff;
+      border-radius: 12px 0 12px 12px;
+      color: #fff;
+      word-wrap: break-word;
+      box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
+    }
+
+    .username, .timestamp {
+      font-size: 12px;
+      margin-bottom: 5px;
+      color: #fff;
+    }
+
+    .timestamp {
+      margin-top: 5px;
+      font-size: 10px;
+      color: #dcdcdc;
+    }
+
+    .admin-actions {
+      margin-top: 10px;
+    }
+
+    .admin-actions button {
+      margin-right: 10px;
+      padding: 5px 10px;
+      background-color: #ff4d4d;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .admin-actions button:hover {
+      opacity: 0.8;
+    }
+
+    #online-users {
+      padding: 10px 20px;
+      background-color: #1c1c1c;
+      border-bottom: 1px solid #333;
+    }
+
+    #online-users h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    #online-users-list {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #dcdcdc;
+    }
+
+    #online-count {
+      font-weight: bold;
+      color: #4CAF50; /* Green for online count */
+    }
+  </style>
+</head>
+<body>
+  <div id="admin-container">
+    <div id="admin-header">
+      <h1>Admin Panel</h1>
+    </div>
+    <div id="online-users">
+      <h2>Active Users (<span id="online-count">0</span>)</h2>
+      <div id="online-users-list">No users Active</div>
+    </div>
+    <div id="admin-messages"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+    import { getDatabase, ref, onValue, remove, set, onDisconnect } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
+
+    // Firebase config (same as in your main chat app)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBMoly1Wc6bkwEIKBGiqFmU_BuoUQNeSgo",
+      authDomain: "",
+      projectId: "offline-chat-app-a50ef",
+      databaseURL: "https://offline-chat-app-a50ef-default-rtdb.firebaseio.com/",
+      messagingSenderId: "183190793649",
+      appId: "1:183190793649:android:e81f98e0b2e8f562272190",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const adminMessages = document.getElementById("admin-messages");
+    const onlineUsersList = document.getElementById("online-users-list");
+    const onlineCount = document.getElementById("online-count");
+
+    // Load Messages
+    onValue(ref(database, "messages"), (snapshot) => {
+      adminMessages.innerHTML = "";
+      snapshot.forEach((childSnapshot) => {
+        const { text, sender, timestamp } = childSnapshot.val();
+        const messageKey = childSnapshot.key;
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add("message-container");
+
+        messageDiv.innerHTML = `
+          <div class="username">${sender}</div>
+          <div class="message" data-key="${messageKey}">${text}</div>
+          <div class="timestamp">${timestamp}</div>
+          <div class="admin-actions">
+            <button onclick="unsendMessage('${messageKey}')">Unsend Message</button>
+          </div>
+        `;
+
+        adminMessages.appendChild(messageDiv);
+      });
+      adminMessages.scrollTop = adminMessages.scrollHeight;
+    });
+
+    // Unsend Message Function
+    window.unsendMessage = (messageKey) => {
+      const confirmUnsend = confirm("Are you sure you want to unsend this message?");
+      if (confirmUnsend) {
+        const messageRef = ref(database, `messages/${messageKey}`);
+        remove(messageRef);
+        alert("Message has been unsent.");
+      }
+    };
+
+    // Track Online Users
+    const onlineUsersRef = ref(database, "onlineUsers");
+
+    // Listen for changes in the online users list
+    onValue(onlineUsersRef, (snapshot) => {
+      const onlineUsers = [];
+      snapshot.forEach((childSnapshot) => {
+        const username = childSnapshot.key;
+        const { online } = childSnapshot.val();
+        if (online) {
+          onlineUsers.push(username);
+        }
+      });
+
+      // Update the online users list
+      onlineUsersList.innerHTML = onlineUsers.length > 0
+        ? onlineUsers.map((user) => `<div>${user}</div>`).join("")
+        : "No users online.";
+
+      // Update the online count
+      onlineCount.textContent = onlineUsers.length;
+    });
+  </script>
+</body>
+</html>
