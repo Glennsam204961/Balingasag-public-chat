@@ -84,7 +84,7 @@
     }
 
     .admin-actions {
-      margin-top: 10px;
+      margin-top: 5px;
     }
 
     .admin-actions button {
@@ -123,6 +123,64 @@
       font-weight: bold;
       color: #4CAF50; /* Green for online count */
     }
+
+    #blocked-users {
+      padding: 10px 20px;
+      background-color: #1c1c1c;
+      border-bottom: 1px solid #333;
+    }
+
+    #blocked-users h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    #blocked-users-list {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #dcdcdc;
+    }
+
+    .blocked-user {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .blocked-user button {
+      padding: 5px 10px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .blocked-user button:hover {
+      opacity: 0.8;
+    }
+
+    .active-user {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .active-user button {
+      padding: 5px 10px;
+      background-color: #ff4d4d;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .active-user button:hover {
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -133,6 +191,10 @@
     <div id="online-users">
       <h2>Active Users (<span id="online-count">0</span>)</h2>
       <div id="online-users-list">No users Active</div>
+    </div>
+    <div id="blocked-users">
+      <h2>Blocked Users</h2>
+      <div id="blocked-users-list">No users blocked</div>
     </div>
     <div id="admin-messages"></div>
   </div>
@@ -157,6 +219,7 @@
     const adminMessages = document.getElementById("admin-messages");
     const onlineUsersList = document.getElementById("online-users-list");
     const onlineCount = document.getElementById("online-count");
+    const blockedUsersList = document.getElementById("blocked-users-list");
 
     // Load Messages
     onValue(ref(database, "messages"), (snapshot) => {
@@ -173,6 +236,7 @@
           <div class="timestamp">${timestamp}</div>
           <div class="admin-actions">
             <button onclick="unsendMessage('${messageKey}')">Unsend Message</button>
+            <button onclick="blockUser('${sender}')">Block User</button>
           </div>
         `;
 
@@ -188,6 +252,36 @@
         const messageRef = ref(database, `messages/${messageKey}`);
         remove(messageRef);
         alert("Message has been unsent.");
+      }
+    };
+
+    // Block User Function
+    window.blockUser = (username) => {
+      const confirmBlock = confirm(`Are you sure you want to block ${username}?`);
+      if (confirmBlock) {
+        const blockedUserRef = ref(database, `blockedUsers/${username}`);
+        set(blockedUserRef, { blocked: true });
+        alert(`${username} has been blocked.`);
+      }
+    };
+
+    // Unblock User Function
+    window.unblockUser = (username) => {
+      const confirmUnblock = confirm(`Are you sure you want to unblock ${username}?`);
+      if (confirmUnblock) {
+        const blockedUserRef = ref(database, `blockedUsers/${username}`);
+        remove(blockedUserRef);
+        alert(`${username} has been unblocked.`);
+      }
+    };
+
+    // Remove User Function
+    window.removeUser = (username) => {
+      const confirmRemove = confirm(`Are you sure you want to remove ${username} from the active users list?`);
+      if (confirmRemove) {
+        const userRef = ref(database, `onlineUsers/${username}`);
+        remove(userRef);
+        alert(`${username} has been removed from the active users list.`);
       }
     };
 
@@ -207,11 +301,38 @@
 
       // Update the online users list
       onlineUsersList.innerHTML = onlineUsers.length > 0
-        ? onlineUsers.map((user) => `<div>${user}</div>`).join("")
+        ? onlineUsers.map((user) => `
+            <div class="active-user">
+              <span>${user}</span>
+              <button onclick="removeUser('${user}')">Remove</button>
+            </div>
+          `).join("")
         : "No users online.";
 
       // Update the online count
       onlineCount.textContent = onlineUsers.length;
+    });
+
+    // Track Blocked Users
+    const blockedUsersRef = ref(database, "blockedUsers");
+
+    // Listen for changes in the blocked users list
+    onValue(blockedUsersRef, (snapshot) => {
+      const blockedUsers = [];
+      snapshot.forEach((childSnapshot) => {
+        const username = childSnapshot.key;
+        blockedUsers.push(username);
+      });
+
+      // Update the blocked users list
+      blockedUsersList.innerHTML = blockedUsers.length > 0
+        ? blockedUsers.map((user) => `
+            <div class="blocked-user">
+              <span>${user}</span>
+              <button onclick="unblockUser('${user}')">Unblock</button>
+            </div>
+          `).join("")
+        : "No users blocked.";
     });
   </script>
 </body>

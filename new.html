@@ -393,243 +393,245 @@
     </form>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-    import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+  import { getDatabase, ref, push, onValue, set, get } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBMoly1Wc6bkwEIKBGiqFmU_BuoUQNeSgo",
-      authDomain:"", // Replace with your Firebase auth domain or leave as null
-      projectId: "offline-chat-app-a50ef", // Replace with your Firebase project ID
-      databaseURL: "https://offline-chat-app-a50ef-default-rtdb.firebaseio.com/",
-      messagingSenderId: "183190793649", // Replace with your Firebase sender ID
-      appId: "1:183190793649:android:e81f98e0b2e8f562272190", // Replace with your Firebase app ID
-    };
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyBMoly1Wc6bkwEIKBGiqFmU_BuoUQNeSgo",
+    authDomain: "offline-chat-app-a50ef.firebaseapp.com",
+    projectId: "offline-chat-app-a50ef",
+    databaseURL: "https://offline-chat-app-a50ef-default-rtdb.firebaseio.com/",
+    messagingSenderId: "183190793649",
+    appId: "1:183190793649:android:e81f98e0b2e8f562272190",
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
 
-    const chatContainer = document.getElementById("chat-container");
-    const chatMessages = document.getElementById("chat-messages");
-    const chatForm = document.getElementById("chat-form");
-    const messageInput = document.getElementById("message-input");
-    const typingRef = ref(database, "typing");
+  const chatContainer = document.getElementById("chat-container");
+  const chatMessages = document.getElementById("chat-messages");
+  const chatForm = document.getElementById("chat-form");
+  const messageInput = document.getElementById("message-input");
+  const typingRef = ref(database, "typing");
 
-    const usernameModal = document.getElementById("username-modal");
-    const usernameInput = document.getElementById("username-input");
-    const usernameSubmit = document.getElementById("username-submit");
+  const usernameModal = document.getElementById("username-modal");
+  const usernameInput = document.getElementById("username-input");
+  const usernameSubmit = document.getElementById("username-submit");
 
-    let username = localStorage.getItem("username");
+  let username = localStorage.getItem("username");
 
-    // Show username modal if no username is set
-    if (!username) {
-      usernameModal.style.display = "flex";
-    } else {
+  // Show username modal if no username is set
+  if (!username) {
+    usernameModal.style.display = "flex";
+  } else {
+    usernameModal.style.display = "none";
+    chatContainer.classList.remove("hidden");
+  }
+
+  // Reference to online users in Firebase
+  const onlineUsersRef = ref(database, "onlineUsers");
+
+  // Add user to the online list
+  function addUserToOnlineList(username) {
+    set(ref(database, `onlineUsers/${username}`), {
+      online: true,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Remove user from the online list when they leave
+  function removeUserFromOnlineList(username) {
+    set(ref(database, `onlineUsers/${username}`), {
+      online: false,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  addUserToOnlineList(username);
+
+  window.addEventListener("beforeunload", () => {
+    removeUserFromOnlineList(username);
+  });
+
+  // Listen for online users count
+  onValue(onlineUsersRef, (snapshot) => {
+    let onlineCount = 0;
+    snapshot.forEach((childSnapshot) => {
+      const { online } = childSnapshot.val();
+      if (online) {
+        onlineCount++;
+      }
+    });
+
+    document.getElementById("online-count").textContent = onlineCount;
+  });
+
+  // Handle username submission
+  usernameSubmit.addEventListener("click", () => {
+    const inputUsername = usernameInput.value.trim();
+    if (inputUsername) {
+      username = inputUsername;
+      localStorage.setItem("username", username);
       usernameModal.style.display = "none";
       chatContainer.classList.remove("hidden");
-    }
-// Add this to your existing JavaScript code
-
-// Reference to the online users in Firebase
-const onlineUsersRef = ref(database, "onlineUsers");
-
-// Function to add a user to the online list
-function addUserToOnlineList(username) {
-  set(ref(database, `onlineUsers/${username}`), {
-    online: true,
-    timestamp: new Date().toISOString(),
-  });
-}
-
-// Function to remove a user from the online list
-function removeUserFromOnlineList(username) {
-  set(ref(database, `onlineUsers/${username}`), {
-    online: false,
-    timestamp: new Date().toISOString(),
-  });
-}
-
-// Add the current user to the online list when they join
-addUserToOnlineList(username);
-
-// Remove the user from the online list when they leave
-window.addEventListener("beforeunload", () => {
-  removeUserFromOnlineList(username);
-});
-
-// Listen for changes in the online users list
-onValue(onlineUsersRef, (snapshot) => {
-  let onlineCount = 0;
-  snapshot.forEach((childSnapshot) => {
-    const { online } = childSnapshot.val();
-    if (online) {
-      onlineCount++;
+    } else {
+      alert("Please enter a valid username.");
     }
   });
 
-  // Update the online indicator
-  const onlineCountElement = document.getElementById("online-count");
-  onlineCountElement.textContent = onlineCount;
-});
-    // Handle username submission
-    usernameSubmit.addEventListener("click", () => {
-      const inputUsername = usernameInput.value.trim();
-      if (inputUsername) {
-        username = inputUsername;
-        localStorage.setItem("username", username);
-        usernameModal.style.display = "none";
-        chatContainer.classList.remove("hidden");
-      } else {
-        alert("Please enter a valid username.");
-      }
+  // **Block/Unblock Feature**
+  let isBlocked = false;
+
+  // Listen for block status changes in real-time
+  onValue(ref(database, `blockedUsers/${username}`), (snapshot) => {
+    isBlocked = snapshot.exists();
+  });
+
+  // **Modified Send Message Function with Block Check**
+  chatForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (isBlocked) {
+      alert("You are blocked and cannot send messages.");
+      return;
+    }
+
+    const message = messageInput.value;
+    const currentTime = new Date().toLocaleString();
+
+    await push(ref(database, "messages"), {
+      text: message,
+      sender: username,
+      timestamp: currentTime,
     });
 
-    // Chat Form Submission
-    chatForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const message = messageInput.value;
-      const currentTime = new Date().toLocaleString();
-      await push(ref(database, "messages"), {
-        text: message,
-        sender: username,
-        timestamp: currentTime,
-      });
-      messageInput.value = "";
+    messageInput.value = "";
+  });
+
+  // Typing Indicator Logic
+  let typingTimeout;
+  messageInput.addEventListener("input", () => {
+    set(typingRef, {
+      user: username,
+      isTyping: true,
     });
 
-    // Typing Indicator Logic
-    let typingTimeout;
-    messageInput.addEventListener("input", () => {
+    if (typingTimeout) clearTimeout(typingTimeout);
+
+    typingTimeout = setTimeout(() => {
       set(typingRef, {
         user: username,
-        isTyping: true,
+        isTyping: false,
+      });
+    }, 2000);
+  });
+
+  onValue(typingRef, (snapshot) => {
+    const typingData = snapshot.val();
+    const typingIndicator = document.getElementById("typing-indicator");
+    const typingText = document.getElementById("typing-text");
+
+    if (typingData && typingData.isTyping) {
+      typingText.textContent = typingData.user;
+      typingIndicator.style.display = "block";
+    } else {
+      typingIndicator.style.display = "none";
+    }
+  });
+
+  // Load Messages
+  onValue(ref(database, "messages"), (snapshot) => {
+    chatMessages.innerHTML = "";
+    snapshot.forEach((childSnapshot) => {
+      const { text, sender, timestamp } = childSnapshot.val();
+      const messageKey = childSnapshot.key;
+      const messageDiv = document.createElement("div");
+      messageDiv.classList.add("message-container");
+
+      messageDiv.classList.add(sender === username ? "current-user" : "other-user");
+
+      messageDiv.innerHTML = `
+      <div class="username">${sender}</div>
+      <div class="message" data-key="${messageKey}">${text}</div>
+      <div class="timestamp">${timestamp}</div>
+      <div class="reaction-container">
+        <button class="reaction-btn">+</button>
+        <div class="emoji-picker">
+          <span class="emoji">🥰</span>
+          <span class="emoji">🥺</span>
+          <span class="emoji">😢</span>
+          <span class="emoji">❤️</span>
+          <span class="emoji">😽</span>
+          <span class="emoji">🙄</span>
+        </div>
+        <span class="reaction-display" id="reaction-${messageKey}"></span>
+      </div>
+    `;
+
+      chatMessages.appendChild(messageDiv);
+
+      // Reaction Logic
+      const reactionBtn = messageDiv.querySelector(".reaction-btn");
+      const emojiPicker = messageDiv.querySelector(".emoji-picker");
+      const reactionDisplay = messageDiv.querySelector(".reaction-display");
+
+      reactionBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
       });
 
-      if (typingTimeout) clearTimeout(typingTimeout);
-
-      typingTimeout = setTimeout(() => {
-        set(typingRef, {
-          user: username,
-          isTyping: false,
+      emojiPicker.querySelectorAll(".emoji").forEach((emoji) => {
+        emoji.addEventListener("click", () => {
+          push(ref(database, `reactions/${messageKey}`), emoji.textContent);
+          emojiPicker.style.display = "none";
         });
-      }, 2000);
-    });
+      });
 
-    onValue(typingRef, (snapshot) => {
-      const typingData = snapshot.val();
-      const typingIndicator = document.getElementById("typing-indicator");
-      const typingText = document.getElementById("typing-text");
-
-      if (typingData && typingData.isTyping) {
-        typingText.textContent = typingData.user;
-        typingIndicator.style.display = "block";
-      } else {
-        typingIndicator.style.display = "none";
-      }
-    });
-
-    // Load Messages
-    onValue(ref(database, "messages"), (snapshot) => {
-      chatMessages.innerHTML = "";
-      snapshot.forEach((childSnapshot) => {
-        const { text, sender, timestamp } = childSnapshot.val();
-        const messageKey = childSnapshot.key;
-        const messageDiv = document.createElement("div");
-        messageDiv.classList.add("message-container");
-
-        messageDiv.classList.add(
-          sender === username ? "current-user" : "other-user"
-        );
-
-        messageDiv.innerHTML = `
-          <div class="username">${sender}</div>
-          <div class="message" data-key="${messageKey}">${text}</div>
-          <div class="timestamp">${timestamp}</div>
-          <div class="reaction-container">
-            <button class="reaction-btn">+</button>
-            <div class="emoji-picker">
-              <span class="emoji">🥰</span>
-              <span class="emoji">🥺</span>
-              <span class="emoji">😢</span>
-              <span class="emoji">❤️</span>
-              <span class="emoji">😽</span>
-              <span class="emoji">🙄</span>
-            </div>
-            <span class="reaction-display" id="reaction-${messageKey}"></span>
-          </div>
-        `;
-
-        chatMessages.appendChild(messageDiv);
-
-        // Reaction Logic
-        const reactionBtn = messageDiv.querySelector(".reaction-btn");
-        const emojiPicker = messageDiv.querySelector(".emoji-picker");
-        const reactionDisplay = messageDiv.querySelector(".reaction-display");
-
-        reactionBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+      // Display Reactions
+      onValue(ref(database, `reactions/${messageKey}`), (reactionSnapshot) => {
+        let reactions = [];
+        reactionSnapshot.forEach((childReaction) => {
+          reactions.push(childReaction.val());
         });
+        reactionDisplay.textContent = reactions.join(" ");
+      });
 
-        const emojis = emojiPicker.querySelectorAll(".emoji");
-        emojis.forEach((emoji) => {
-          emoji.addEventListener("click", () => {
-            const selectedEmoji = emoji.textContent;
-            const reactionRef = ref(database, `reactions/${messageKey}`);
-            push(reactionRef, selectedEmoji);
-            emojiPicker.style.display = "none";
-          });
-        });
+      // Unsend Logic
+      const messageElement = messageDiv.querySelector(".message");
+      let tapTimeout = null;
 
-        // Display Reactions
-        onValue(ref(database, `reactions/${messageKey}`), (reactionSnapshot) => {
-          let reactions = [];
-          reactionSnapshot.forEach((childReaction) => {
-            reactions.push(childReaction.val());
-          });
-          reactionDisplay.textContent = reactions.join(" ");
-        });
+      messageElement.addEventListener("click", () => {
+        if (tapTimeout) {
+          clearTimeout(tapTimeout);
+          tapTimeout = null;
 
-        // Unsend Logic
-        const messageElement = messageDiv.querySelector(".message");
-        let tapTimeout = null;
-
-        messageElement.addEventListener("click", () => {
-          if (tapTimeout) {
-            clearTimeout(tapTimeout);
-            tapTimeout = null;
-
-            // Only allow the sender to unsend their own messages
-            if (sender === username) {
-              const confirmUnsend = confirm("Do you want to unsend this message?");
-              if (confirmUnsend) {
-                const messageRef = ref(database, `messages/${messageKey}`);
-                set(messageRef, {
-                  text: `[${username} unsent a message]`,
-                  sender: username,
-                  timestamp: timestamp,
-                });
-                messageElement.classList.add("unsent");
-              }
+          if (sender === username) {
+            if (confirm("Do you want to unsend this message?")) {
+              set(ref(database, `messages/${messageKey}`), {
+                text: `[${username} unsent a message]`,
+                sender: username,
+                timestamp: timestamp,
+              });
+              messageElement.classList.add("unsent");
             }
-          } else {
-            tapTimeout = setTimeout(() => {
-              tapTimeout = null;
-            }, 300);
           }
-        });
+        } else {
+          tapTimeout = setTimeout(() => {
+            tapTimeout = null;
+          }, 300);
+        }
       });
-      chatMessages.scrollTop = chatMessages.scrollHeight;
     });
 
-    // Hamburger Button Logic
-    const hamburgerBtn = document.getElementById("hamburger-btn");
-    const headerButtons = document.getElementById("header-buttons");
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
 
-    hamburgerBtn.addEventListener("click", () => {
-      headerButtons.classList.toggle("show");
-    });
-  </script>
+  // Hamburger Button Logic
+  document.getElementById("hamburger-btn").addEventListener("click", () => {
+    document.getElementById("header-buttons").classList.toggle("show");
+  });
+</script>
 </body>
 </html>
